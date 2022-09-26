@@ -74,7 +74,7 @@ runs:
         echo "EOF" >> $GITHUB_ENV
 
     - name: Publish SDK
-      uses: burrunan/gradle-cache-action@v1.12
+      uses: burrunan/gradle-cache-action@v1
       with:
         gradle-version: wrapper
         gradle-dependencies-cache-key: buildSrc/**/Dependencies.kt
