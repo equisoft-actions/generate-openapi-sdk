@@ -68,7 +68,7 @@ runs:
           PROPERTIES+=(openApiSpec=${{ inputs.openapi-spec-file }});
         fi
 
-        echo "::set-output name=task-name::${TASK}${GENERATOR}Sdk"
+        echo task-name=${TASK}${GENERATOR}Sdk" >> $GITHUB_OUTPUT
         echo "PROPERTIES<<EOF" >> $GITHUB_ENV
         printf "%s\n" "${PROPERTIES[@]}" >> $GITHUB_ENV
         echo "EOF" >> $GITHUB_ENV
