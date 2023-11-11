@@ -70,16 +70,32 @@ runs:
 
         echo "task-name=${TASK}${GENERATOR}Sdk" >> $GITHUB_OUTPUT
         echo "PROPERTIES<<EOF" >> $GITHUB_ENV
-        printf "%s\n" "${PROPERTIES[@]}" >> $GITHUB_ENV
+        printf -- "-P%s\n" "${PROPERTIES[@]}" >> $GITHUB_ENV
         echo "EOF" >> $GITHUB_ENV
 
+    - name: Process gradle properties
+      id: gradle-properties
+      shell: python
+      env:
+        GRADLE_PROPERTIES: ${{ inputs.gradle-properties }}
+      run: |
+        import os
+
+        properties_list: list[str] = [line for line in (line.strip() for line in os.environ.get('GRADLE_PROPERTIES').splitlines()) if line]
+        properties = list(map(lambda x: f'-P{x}' if not x.startswith('-P') else x, properties_list))
+
+        with open(os.environ.get('GITHUB_OUTPUT'), 'a') as output_file:
+          output_file.write('gradle-properties=')
+          output_file.write(' '.join(properties))
+          output_file.write('\n')
+
     - name: Publish SDK
-      uses: burrunan/gradle-cache-action@v1
+      uses: gradle/gradle-build-action@v2
       with:
         gradle-version: wrapper
-        gradle-dependencies-cache-key: buildSrc/**/Dependencies.kt
-        arguments: -p ${{ inputs.gradle-project-path }} ${{ steps.properties.outputs.task-name }}
-        build-root-directory: ${{ inputs.working-directory }}
-        properties:
-          ${{ inputs.gradle-properties }}
+        arguments: |
+          -p ${{ inputs.gradle-project-path }}
+          ${{ steps.properties.outputs.task-name }}
           ${{ env.PROPERTIES }}
+          ${{ steps.gradle-properties.outputs.gradle-properties }}
+        build-root-directory: ${{ inputs.working-directory }}
