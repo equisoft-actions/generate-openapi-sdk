@@ -89,13 +89,18 @@ runs:
           output_file.write(' '.join(properties))
           output_file.write('\n')
 
-    - name: Publish SDK
-      uses: gradle/actions/setup-gradle@v3
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
       with:
         gradle-version: wrapper
-        arguments: |
-          -p ${{ inputs.gradle-project-path }}
-          ${{ steps.properties.outputs.task-name }}
-          ${{ env.PROPERTIES }}
-          ${{ steps.gradle-properties.outputs.gradle-properties }}
         build-root-directory: ${{ inputs.working-directory }}
+
+    - name: Publish SDK
+      shell: bash
+      working-directory: ${{ inputs.working-directory }}
+      run: >-
+        ./gradlew
+        -p ${{ inputs.gradle-project-path }}
+        ${{ steps.properties.outputs.task-name }}
+        ${{ env.PROPERTIES }}
+        ${{ steps.gradle-properties.outputs.gradle-properties }}
