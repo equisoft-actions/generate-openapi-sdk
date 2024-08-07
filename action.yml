@@ -43,48 +43,39 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Lookup properties
-      id: properties
-      shell: bash
-      run: |
-        PROPERTIES=(
-          is-release=${{ inputs.is-release }}
-        )
-        TASK=build
-
-        GENERATOR=${{ inputs.generator-name }}
-        GENERATOR=${GENERATOR,,}
-        GENERATOR=${GENERATOR^}
-
-        if [[ "${{ inputs.publish }}" == "true" ]]; then
-          TASK=publish
-          PROPERTIES+=(gpr.write.key=${{ inputs.publish-pat }});
-
-          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git config --global user.name "github-actions[bot]"
-        fi
-
-        if [[ "${{ inputs.openapi-spec-file }}" != "" ]]; then
-          PROPERTIES+=(openApiSpec=${{ inputs.openapi-spec-file }});
-        fi
-
-        echo "task-name=${TASK}${GENERATOR}Sdk" >> $GITHUB_OUTPUT
-        echo "PROPERTIES<<EOF" >> $GITHUB_ENV
-        printf -- "-P%s\n" "${PROPERTIES[@]}" >> $GITHUB_ENV
-        echo "EOF" >> $GITHUB_ENV
-
     - name: Process gradle properties
-      id: gradle-properties
+      id: properties
       shell: python
       env:
-        GRADLE_PROPERTIES: ${{ inputs.gradle-properties }}
+        INPUT_GENERATOR_NAME: ${{ inputs.generator-name }}
+        INPUT_GRADLE_PROPERTIES: ${{ inputs.gradle-properties }}
+        INPUT_IS_RELEASE: ${{ inputs.is-release }}
+        INPUT_OPENAPI_SPEC_FILE: ${{ inputs.openapi-spec-file }}
+        INPUT_PUBLISH: ${{ inputs.publish }}
+        INPUT_PUBLISH_PAT: ${{ inputs.publish-pat }}
       run: |
         import os
+        import subprocess
 
-        properties_list: list[str] = [line for line in (line.strip() for line in os.environ.get('GRADLE_PROPERTIES').splitlines()) if line]
-        properties = list(map(lambda x: f'-P{x}' if not x.startswith('-P') else x, properties_list))
+        task = 'build'
+        generator = os.environ.get('INPUT_GENERATOR_NAME').title()
+        properties = [ '-Pis-release=' + os.environ.get('INPUT_IS_RELEASE') ]
+
+        if os.environ.get('INPUT_PUBLISH') == 'true':
+          task = 'publish'
+          properties.append('-Pgpr.write.key=' + os.environ.get('INPUT_PUBLISH_PAT'))
+
+          subprocess.run(['git', 'config', '--global', 'user.email', '41898282+github-actions[bot]@users.noreply.github.com'])
+          subprocess.run(['git', 'config', '--global', 'user.name', 'github-actions[bot]'])
+
+        if os.environ.get('INPUT_OPENAPI_SPEC_FILE'):
+          properties.append('-PopenApiSpec=' + os.environ.get('INPUT_OPENAPI_SPEC_FILE'))
+
+        properties_input: list[str] = [line for line in (line.strip() for line in os.environ.get('INPUT_GRADLE_PROPERTIES').splitlines()) if line]
+        properties.extend(map(lambda x: f'-P{x}' if not x.startswith('-P') else x, properties_input))
 
         with open(os.environ.get('GITHUB_OUTPUT'), 'a') as output_file:
+          output_file.write(f'task-name={task}{generator}Sdk\n')
           output_file.write('gradle-properties=')
           output_file.write(' '.join(properties))
           output_file.write('\n')
@@ -101,5 +92,4 @@ runs:
         ./gradlew \
         -p ${{ inputs.gradle-project-path }} \
         ${{ steps.properties.outputs.task-name }} \
-        ${{ env.PROPERTIES }} \
-        ${{ steps.gradle-properties.outputs.gradle-properties }}
+        ${{ steps.properties.outputs.gradle-properties }}
