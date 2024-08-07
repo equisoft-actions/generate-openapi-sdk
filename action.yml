@@ -93,14 +93,13 @@ runs:
       uses: gradle/actions/setup-gradle@v4
       with:
         gradle-version: wrapper
-        build-root-directory: ${{ inputs.working-directory }}
 
     - name: Publish SDK
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: >-
-        ./gradlew
-        -p ${{ inputs.gradle-project-path }}
-        ${{ steps.properties.outputs.task-name }}
-        ${{ env.PROPERTIES }}
+      run: |-
+        ./gradlew \
+        -p ${{ inputs.gradle-project-path }} \
+        ${{ steps.properties.outputs.task-name }} \
+        ${{ env.PROPERTIES }} \
         ${{ steps.gradle-properties.outputs.gradle-properties }}
