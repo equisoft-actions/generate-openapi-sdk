@@ -98,9 +98,9 @@ runs:
     - name: Publish SDK
       shell: bash
       working-directory: ${{ inputs.working-directory }}
-      run: >-
-        ./gradlew
-        -p ${{ inputs.gradle-project-path }}
-        ${{ steps.properties.outputs.task-name }}
-        ${{ env.PROPERTIES }}
+      run: |-
+        ./gradlew \
+        -p ${{ inputs.gradle-project-path }} \
+        ${{ steps.properties.outputs.task-name }} \
+        ${{ env.PROPERTIES }} \
         ${{ steps.gradle-properties.outputs.gradle-properties }}
