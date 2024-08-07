@@ -93,7 +93,6 @@ runs:
       uses: gradle/actions/setup-gradle@v4
       with:
         gradle-version: wrapper
-        build-root-directory: ${{ inputs.working-directory }}
 
     - name: Publish SDK
       shell: bash
