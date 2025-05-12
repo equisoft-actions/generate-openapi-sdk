@@ -87,6 +87,8 @@ runs:
 
     - name: Publish SDK
       shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.publish-pat }}
       working-directory: ${{ inputs.working-directory }}
       run: |-
         ./gradlew \
